@@ -1,0 +1,262 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 11.4
+-- Dumped by pg_dump version 11.4
+
+-- Started on 2019-07-10 18:16:04 EDT
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+SET default_tablespace = '';
+
+SET default_with_oids = false;
+
+--
+-- TOC entry 197 (class 1259 OID 16955)
+-- Name: departments; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.departments (
+    dept_no character varying(4) NOT NULL,
+    dept_name character varying(30) NOT NULL
+);
+
+
+ALTER TABLE public.departments OWNER TO postgres;
+
+--
+-- TOC entry 198 (class 1259 OID 16960)
+-- Name: dept_emp; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.dept_emp (
+    employee integer NOT NULL,
+    dept_no character varying(4) NOT NULL,
+    start_date date NOT NULL,
+    end_date date NOT NULL
+);
+
+
+ALTER TABLE public.dept_emp OWNER TO postgres;
+
+--
+-- TOC entry 199 (class 1259 OID 16963)
+-- Name: dept_manager; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.dept_manager (
+    dept_no character varying(4) NOT NULL,
+    employee integer NOT NULL,
+    from_date date NOT NULL,
+    to_date date NOT NULL
+);
+
+
+ALTER TABLE public.dept_manager OWNER TO postgres;
+
+--
+-- TOC entry 196 (class 1259 OID 16950)
+-- Name: employees; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.employees (
+    employee integer NOT NULL,
+    birth_date date NOT NULL,
+    first_name character varying(30) NOT NULL,
+    last_name character varying(30) NOT NULL,
+    gender character varying(1) NOT NULL,
+    hire_date date NOT NULL
+);
+
+
+ALTER TABLE public.employees OWNER TO postgres;
+
+--
+-- TOC entry 202 (class 1259 OID 17028)
+-- Name: employee; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW public.employee AS
+ SELECT employees.employee,
+    employees.first_name,
+    employees.last_name,
+    departments.dept_name,
+    dept_emp.dept_no
+   FROM ((public.employees
+     JOIN public.dept_emp ON ((employees.employee = dept_emp.employee)))
+     JOIN public.departments ON (((departments.dept_no)::text = (dept_emp.dept_no)::text)));
+
+
+ALTER TABLE public.employee OWNER TO postgres;
+
+--
+-- TOC entry 203 (class 1259 OID 17032)
+-- Name: managers; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW public.managers AS
+ SELECT dept_manager.dept_no,
+    departments.dept_name,
+    dept_manager.employee,
+    employees.last_name,
+    employees.first_name,
+    dept_manager.from_date,
+    dept_manager.to_date
+   FROM ((public.dept_manager
+     JOIN public.employees ON ((employees.employee = dept_manager.employee)))
+     JOIN public.departments ON (((departments.dept_no)::text = (dept_manager.dept_no)::text)));
+
+
+ALTER TABLE public.managers OWNER TO postgres;
+
+--
+-- TOC entry 200 (class 1259 OID 16966)
+-- Name: salary; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.salary (
+    employee integer NOT NULL,
+    salary integer NOT NULL,
+    from_date date NOT NULL,
+    to_date date NOT NULL
+);
+
+
+ALTER TABLE public.salary OWNER TO postgres;
+
+--
+-- TOC entry 204 (class 1259 OID 17036)
+-- Name: me; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW public.me AS
+ SELECT employees.employee,
+    employees.first_name,
+    employees.last_name,
+    salary.salary
+   FROM (public.employees
+     JOIN public.salary ON ((employees.employee = salary.employee)));
+
+
+ALTER TABLE public.me OWNER TO postgres;
+
+--
+-- TOC entry 201 (class 1259 OID 16969)
+-- Name: title; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.title (
+    employee integer NOT NULL,
+    title character varying(30) NOT NULL,
+    from_date date NOT NULL,
+    to_date date NOT NULL
+);
+
+
+ALTER TABLE public.title OWNER TO postgres;
+
+--
+-- TOC entry 3037 (class 2606 OID 16959)
+-- Name: departments pk_departments; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.departments
+    ADD CONSTRAINT pk_departments PRIMARY KEY (dept_no);
+
+
+--
+-- TOC entry 3035 (class 2606 OID 16954)
+-- Name: employees pk_employees; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.employees
+    ADD CONSTRAINT pk_employees PRIMARY KEY (employee);
+
+
+--
+-- TOC entry 3032 (class 1259 OID 17002)
+-- Name: idx_employees_first_name; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_employees_first_name ON public.employees USING btree (first_name);
+
+
+--
+-- TOC entry 3033 (class 1259 OID 17003)
+-- Name: idx_employees_last_name; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_employees_last_name ON public.employees USING btree (last_name);
+
+
+--
+-- TOC entry 3039 (class 2606 OID 16977)
+-- Name: dept_emp fk_dept_emp_dept_no; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.dept_emp
+    ADD CONSTRAINT fk_dept_emp_dept_no FOREIGN KEY (dept_no) REFERENCES public.departments(dept_no);
+
+
+--
+-- TOC entry 3038 (class 2606 OID 16972)
+-- Name: dept_emp fk_dept_emp_employee; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.dept_emp
+    ADD CONSTRAINT fk_dept_emp_employee FOREIGN KEY (employee) REFERENCES public.employees(employee);
+
+
+--
+-- TOC entry 3041 (class 2606 OID 16987)
+-- Name: dept_manager fk_dept_manager_dept_no; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.dept_manager
+    ADD CONSTRAINT fk_dept_manager_dept_no FOREIGN KEY (dept_no) REFERENCES public.departments(dept_no);
+
+
+--
+-- TOC entry 3040 (class 2606 OID 16982)
+-- Name: dept_manager fk_dept_manager_employee; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.dept_manager
+    ADD CONSTRAINT fk_dept_manager_employee FOREIGN KEY (employee) REFERENCES public.employees(employee);
+
+
+--
+-- TOC entry 3042 (class 2606 OID 16992)
+-- Name: salary fk_salary_employee; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.salary
+    ADD CONSTRAINT fk_salary_employee FOREIGN KEY (employee) REFERENCES public.employees(employee);
+
+
+--
+-- TOC entry 3043 (class 2606 OID 16997)
+-- Name: title fk_title_employee; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.title
+    ADD CONSTRAINT fk_title_employee FOREIGN KEY (employee) REFERENCES public.employees(employee);
+
+
+-- Completed on 2019-07-10 18:16:04 EDT
+
+--
+-- PostgreSQL database dump complete
+--
+
